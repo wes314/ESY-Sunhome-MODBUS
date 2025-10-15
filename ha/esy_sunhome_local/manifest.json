@@ -1,0 +1,11 @@
+{
+  "domain": "esy_sunhome_local",
+  "name": "ESY Sunhome Local",
+  "version": "1.0",
+  "requirements": ["pymodbus>=3.0.0"],
+  "dependencies": [],
+  "codeowners": ["@wes"],
+  "config_flow": true,
+  "config_entries": true
+}
+
