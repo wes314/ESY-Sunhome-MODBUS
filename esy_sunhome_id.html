@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EsySunHome API Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 1em; background: #f7f7f7; }
+    pre { background: #fff; padding: 1em; border-radius: 8px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>EsySunHome API Test</h2>
+  <pre id="output">Waiting for input...</pre>
+
+  <script>
+    const output = document.getElementById("output");
+
+    // Prompt for credentials
+    const userName = prompt("Enter your EsySunHome login (email or username):", "");
+    const password = prompt("Enter your EsySunHome password:", "");
+
+    if (!userName || !password) {
+      output.textContent = "Login cancelled.";
+      throw new Error("Login cancelled by user");
+    }
+
+    const loginData = {
+      password: password,
+      clientId: "",
+      requestType: 1,
+      loginType: "PASSWORD",
+      userType: 2,
+      userName: userName
+    };
+
+    async function run() {
+      output.textContent = "Logging in...\n";
+
+      try {
+        // 1. Login
+        const loginResp = await fetch("http://esybackend.esysunhome.com:7073/login?grant_type=app", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(loginData)
+        });
+
+        if (!loginResp.ok) throw new Error("Login failed: " + loginResp.status);
+        const loginJson = await loginResp.json();
+
+        const accessToken = loginJson.data?.access_token;
+        if (!accessToken) throw new Error("No access_token in response");
+
+        // 2. Get inverter info
+        output.textContent += "Fetching inverter info...\n";
+        const inverterResp = await fetch("http://esybackend.esysunhome.com:7073/api/lsydevice/page?current=1&size=1", {
+          headers: { "Authorization": "bearer " + accessToken }
+        });
+
+        if (!inverterResp.ok) throw new Error("Inverter request failed: " + inverterResp.status);
+        const inverterJson = await inverterResp.json();
+
+        // 3. Show results
+        output.textContent =
+          "Access token:\n" + accessToken + "\n\nInverter response:\n" +
+          JSON.stringify(inverterJson, null, 2);
+      } catch (err) {
+        output.textContent = "Error:\n" + err;
+        console.error(err);
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>
+
